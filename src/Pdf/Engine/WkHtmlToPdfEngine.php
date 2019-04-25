@@ -85,7 +85,7 @@ class WkHtmlToPdfEngine extends AbstractPdfEngine
      */
     protected function _getCommand()
     {
-        $binary = $this->config('binary');
+        $binary = $this->getConfig('binary');
 
         if ($binary) {
             $this->_binary = $binary;
@@ -111,7 +111,7 @@ class WkHtmlToPdfEngine extends AbstractPdfEngine
                 $options['margin-' . $key] = $value . 'mm';
             }
         }
-        $options = array_merge($options, (array)$this->config('options'));
+        $options = array_merge($options, (array)$this->getConfig('options'));
 
         $command = $this->_binary;
         foreach ($options as $key => $value) {
@@ -176,7 +176,7 @@ class WkHtmlToPdfEngine extends AbstractPdfEngine
             if (!$File->exists()) {
                 throw new CakeException('Unable to make temp file for PDF rendering: ' . $key);
             }
-            if (!($this->config('webroot-temp-disable-wrapper'))) {
+            if (!($this->getConfig('webroot-temp-disable-wrapper'))) {
                     $content = sprintf('<!DOCTYPE html><html><head><script>' .
                             'function subst() { var vars={}; var x=window.location.search.substring(1).split("&"); for (var i in x) {var z=x[i].split("=",2);vars[z[0]] = unescape(z[1]);} var x=["frompage","topage","page","webpage","section","subsection","subsubsection"]; for (var i in x) { var y = document.getElementsByClassName(x[i]); for (var j=0; j<y.length; ++j) y[j].textContent = vars[x[i]]; } }' .
                             '</script></head><body style="border:0; margin: 0;padding: 0;line-height: 1;vertical-align: baseline;" onload="subst()">%s</body></html>',

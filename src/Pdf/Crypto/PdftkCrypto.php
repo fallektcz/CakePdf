@@ -40,7 +40,7 @@ class PdftkCrypto extends AbstractPdfCrypto
      */
     public function encrypt($data)
     {
-        $binary = $this->config('binary');
+        $binary = $this->getConfig('binary');
 
         if ($binary) {
             $this->_binary = $binary;

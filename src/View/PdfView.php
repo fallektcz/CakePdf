@@ -5,8 +5,8 @@ use CakePdf\Pdf\CakePdf;
 use Cake\Core\Configure;
 use Cake\Core\Exception\Exception;
 use Cake\Event\EventManager;
-use Cake\Network\Request;
-use Cake\Network\Response;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\View\View;
 
 class PdfView extends View
@@ -43,8 +43,8 @@ class PdfView extends View
     /**
      * Constructor
      *
-     * @param \Cake\Network\Request $request Request instance.
-     * @param \Cake\Network\Response $response Response instance.
+     * @param \Cake\Http\ServerRequest $request Request instance.
+     * @param \Cake\Http\Response $response Response instance.
      * @param \Cake\Event\EventManager $eventManager Event manager instance.
      * @param array $viewOptions View options. See View::$_passedVars for list of
      *   options which get set as class properties.
@@ -52,7 +52,7 @@ class PdfView extends View
      * @throws \Cake\Core\Exception\Exception
      */
     public function __construct(
-        Request $request = null,
+        ServerRequest $request = null,
         Response $response = null,
         EventManager $eventManager = null,
         array $viewOptions = []
@@ -64,11 +64,11 @@ class PdfView extends View
             (array)$this->pdfConfig
         );
 
-        $response->type('pdf');
-        if (isset($viewOptions['name']) && $viewOptions['name'] == 'Error') {
+        $this->response = $this->response->withType('pdf');
+        if (isset($viewOptions['templatePath']) && $viewOptions['templatePath'] == 'Error') {
             $this->subDir = null;
             $this->layoutPath = null;
-            $response->type('html');
+            $this->response = $this->response->withType('html');
 
             return;
         }
@@ -103,21 +103,21 @@ class PdfView extends View
     public function render($view = null, $layout = null)
     {
         $content = parent::render($view, $layout);
-        if ($this->response->type() == 'text/html') {
+        if (version_compare(Configure::version(), '3.6.0', '<')) {
+            $type = $this->response->type();
+        } else {
+            $type = $this->response->getType();
+        }
+        if ($type === 'text/html') {
             return $content;
         }
-        if ($this->renderer() == null) {
-            $this->response->type('html');
-
+        if ($this->renderer() === null) {
+            $this->response = $this->response->withType('html');
             return $content;
         }
-        
-        $this->renderer()->config($this->pdfConfig);
-
-        if (isset($this->pdfConfig['download']) && $this->pdfConfig['download'] === true) {
-            $this->response->download($this->getFilename());
+        if (!empty($this->pdfConfig['filename']) || !empty($this->pdfConfig['download'])) {
+            $this->response = $this->response->withDownload($this->getFilename());
         }
-
         $this->Blocks->set('content', $this->renderer()->output($content));
 
         return $this->Blocks->get('content');
